@@ -31,4 +31,18 @@ interface HealthRepository {
     fun getHealthReports(): Flow<List<HealthReport>>
     fun getOptimizationLogs(): Flow<List<OptimizationLog>>
     suspend fun saveOptimizationLog(log: OptimizationLog)
+
+    fun getSocMetrics(): Flow<SocMetrics>
+    fun getIncidents(): Flow<List<CyberIncident>>
+    suspend fun saveIncident(incident: CyberIncident)
+    fun getEvidences(): Flow<List<DigitalEvidence>>
+    suspend fun saveEvidence(evidence: DigitalEvidence)
+    fun getIocs(): Flow<List<IocItem>>
+    suspend fun saveIoc(ioc: IocItem)
+    fun getAssets(): Flow<List<AssetItem>>
+    suspend fun saveAsset(asset: AssetItem)
+    fun getAudits(): Flow<List<AuditLogItem>>
+    suspend fun saveAudit(audit: AuditLogItem)
+    fun getThreats(): Flow<List<ThreatItem>>
+    suspend fun saveThreat(threat: ThreatItem)
 }

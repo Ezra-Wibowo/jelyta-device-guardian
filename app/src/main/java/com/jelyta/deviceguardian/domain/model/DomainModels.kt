@@ -45,3 +45,60 @@ data class ChatMessage(
     val isUser: Boolean,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+data class CyberIncident(
+    val id: Long = 0,
+    val title: String,
+    val severity: String,
+    val description: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class DigitalEvidence(
+    val id: Long = 0,
+    val artifactName: String,
+    val artifactType: String,
+    val hashSha256: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class IocItem(
+    val id: Long = 0,
+    val indicatorType: String,
+    val indicatorValue: String,
+    val threatCategory: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class AssetItem(
+    val id: Long = 0,
+    val assetName: String,
+    val assetType: String,
+    val status: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class AuditLogItem(
+    val id: Long = 0,
+    val auditTitle: String,
+    val outcome: String,
+    val details: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class ThreatItem(
+    val id: Long = 0,
+    val threatName: String,
+    val riskLevel: String,
+    val status: String,
+    val timestamp: Long = System.currentTimeMillis()
+)
+
+data class SocMetrics(
+    val incidentsCount: Int = 0,
+    val evidencesCount: Int = 0,
+    val iocCount: Int = 0,
+    val assetsCount: Int = 0,
+    val auditCount: Int = 0,
+    val threatsCount: Int = 0
+)

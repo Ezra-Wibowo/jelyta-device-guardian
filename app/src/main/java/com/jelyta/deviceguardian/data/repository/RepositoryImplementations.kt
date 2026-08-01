@@ -6,6 +6,7 @@ import com.jelyta.deviceguardian.data.remote.*
 import com.jelyta.deviceguardian.domain.model.*
 import com.jelyta.deviceguardian.domain.repository.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 
 class DeviceRepositoryImpl(
@@ -70,7 +71,13 @@ class CloudRepositoryImpl(
 
 class HealthRepositoryImpl(
     private val healthReportDao: HealthReportDao,
-    private val optimizationLogDao: OptimizationLogDao
+    private val optimizationLogDao: OptimizationLogDao,
+    private val securityIncidentDao: SecurityIncidentDao,
+    private val digitalEvidenceDao: DigitalEvidenceDao,
+    private val iocItemDao: IocItemDao,
+    private val assetItemDao: AssetItemDao,
+    private val auditLogDao: AuditLogDao,
+    private val threatItemDao: ThreatItemDao
 ) : HealthRepository {
     override suspend fun saveHealthReport(report: HealthReport) {
         healthReportDao.insertReport(HealthReportEntity.fromDomain(report))
@@ -87,4 +94,62 @@ class HealthRepositoryImpl(
     override suspend fun saveOptimizationLog(log: OptimizationLog) {
         optimizationLogDao.insertLog(OptimizationLogEntity.fromDomain(log))
     }
+
+    override fun getSocMetrics(): Flow<SocMetrics> {
+        return combine(
+            listOf(
+                securityIncidentDao.getCount(),
+                digitalEvidenceDao.getCount(),
+                iocItemDao.getCount(),
+                assetItemDao.getCount(),
+                auditLogDao.getCount(),
+                threatItemDao.getCount()
+            )
+        ) { array ->
+            SocMetrics(
+                incidentsCount = array[0],
+                evidencesCount = array[1],
+                iocCount = array[2],
+                assetsCount = array[3],
+                auditCount = array[4],
+                threatsCount = array[5]
+            )
+        }
+    }
+
+    override fun getIncidents(): Flow<List<CyberIncident>> =
+        securityIncidentDao.getAllIncidents().map { list -> list.map { it.toDomain() } }
+
+    override suspend fun saveIncident(incident: CyberIncident) =
+        securityIncidentDao.insertIncident(SecurityIncidentEntity.fromDomain(incident))
+
+    override fun getEvidences(): Flow<List<DigitalEvidence>> =
+        digitalEvidenceDao.getAllEvidences().map { list -> list.map { it.toDomain() } }
+
+    override suspend fun saveEvidence(evidence: DigitalEvidence) =
+        digitalEvidenceDao.insertEvidence(DigitalEvidenceEntity.fromDomain(evidence))
+
+    override fun getIocs(): Flow<List<IocItem>> =
+        iocItemDao.getAllIocs().map { list -> list.map { it.toDomain() } }
+
+    override suspend fun saveIoc(ioc: IocItem) =
+        iocItemDao.insertIoc(IocItemEntity.fromDomain(ioc))
+
+    override fun getAssets(): Flow<List<AssetItem>> =
+        assetItemDao.getAllAssets().map { list -> list.map { it.toDomain() } }
+
+    override suspend fun saveAsset(asset: AssetItem) =
+        assetItemDao.insertAsset(AssetItemEntity.fromDomain(asset))
+
+    override fun getAudits(): Flow<List<AuditLogItem>> =
+        auditLogDao.getAllAudits().map { list -> list.map { it.toDomain() } }
+
+    override suspend fun saveAudit(audit: AuditLogItem) =
+        auditLogDao.insertAudit(AuditLogItemEntity.fromDomain(audit))
+
+    override fun getThreats(): Flow<List<ThreatItem>> =
+        threatItemDao.getAllThreats().map { list -> list.map { it.toDomain() } }
+
+    override suspend fun saveThreat(threat: ThreatItem) =
+        threatItemDao.insertThreat(ThreatItemEntity.fromDomain(threat))
 }

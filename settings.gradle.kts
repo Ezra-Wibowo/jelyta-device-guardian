@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "Device Guardian"
+rootProject.name = "Jelyta Cyber Security"
 
 include(":app")

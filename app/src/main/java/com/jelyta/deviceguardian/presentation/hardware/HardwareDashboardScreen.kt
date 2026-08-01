@@ -150,36 +150,35 @@ fun HardwareDashboardScreen(
 
                 // 2. Tab Navigation
                 item {
-                    TabRow(
+                    ScrollableTabRow(
                         selectedTabIndex = state.selectedCategoryIndex,
                         containerColor = CardSurface,
                         contentColor = PrimaryCyan,
-                        indicator = { tabPositions ->
-                            if (state.selectedCategoryIndex < tabPositions.size) {
-                                TabRowDefaults.SecondaryIndicator(
-                                    modifier = Modifier.tabIndicatorOffset(tabPositions[state.selectedCategoryIndex]),
-                                    color = PrimaryCyan
-                                )
-                            }
-                        }
+                        edgePadding = 0.dp
                     ) {
                         Tab(
                             selected = state.selectedCategoryIndex == 0,
                             onClick = { viewModel.selectCategory(0) },
-                            text = { Text("Battery & Thermal", fontSize = 12.sp) },
-                            icon = { Icon(Icons.Default.BatteryChargingFull, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                            text = { Text("Battery & Thermal", fontSize = 11.sp) },
+                            icon = { Icon(Icons.Default.BatteryChargingFull, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         )
                         Tab(
                             selected = state.selectedCategoryIndex == 1,
                             onClick = { viewModel.selectCategory(1) },
-                            text = { Text("Memory & Storage", fontSize = 12.sp) },
-                            icon = { Icon(Icons.Default.Storage, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                            text = { Text("Memory & Storage", fontSize = 11.sp) },
+                            icon = { Icon(Icons.Default.Storage, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         )
                         Tab(
                             selected = state.selectedCategoryIndex == 2,
                             onClick = { viewModel.selectCategory(2) },
-                            text = { Text("CPU & System", fontSize = 12.sp) },
-                            icon = { Icon(Icons.Default.Speed, contentDescription = null, modifier = Modifier.size(18.dp)) }
+                            text = { Text("CPU & System", fontSize = 11.sp) },
+                            icon = { Icon(Icons.Default.Speed, contentDescription = null, modifier = Modifier.size(16.dp)) }
+                        )
+                        Tab(
+                            selected = state.selectedCategoryIndex == 3,
+                            onClick = { viewModel.selectCategory(3) },
+                            text = { Text("Sensors & Traffic", fontSize = 11.sp) },
+                            icon = { Icon(Icons.Default.Sensors, contentDescription = null, modifier = Modifier.size(16.dp)) }
                         )
                     }
                 }
@@ -189,7 +188,8 @@ fun HardwareDashboardScreen(
                     when (state.selectedCategoryIndex) {
                         0 -> BatteryThermalSection(snapshot)
                         1 -> MemoryStorageSection(snapshot)
-                        else -> CpuSystemSection(snapshot)
+                        2 -> CpuSystemSection(snapshot)
+                        else -> SensorsTrafficSection(snapshot)
                     }
                 }
             }
@@ -289,6 +289,71 @@ private fun CpuSystemSection(snapshot: com.jelyta.deviceguardian.domain.model.Ha
             HardwareDetailRow("Estimated CPU Load", "${c.estimatedCpuUsagePercent}%")
             Spacer(modifier = Modifier.height(8.dp))
             Text(c.statusDescription, color = TextSecondary, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+private fun SensorsTrafficSection(snapshot: com.jelyta.deviceguardian.domain.model.HardwareSnapshot) {
+    val traffic = snapshot.networkTrafficInfo
+    val sensors = snapshot.sensorsInfo
+
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Network Traffic Stats Card
+        traffic?.let { t ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(containerColor = CardSurface),
+                shape = RoundedCornerShape(12.dp)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.NetworkCheck, contentDescription = null, tint = PrimaryCyan)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("REAL-TIME NETWORK TRAFFIC (TrafficStats)", fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    HardwareDetailRow("Total Download (Rx)", t.formattedTotalRx)
+                    HardwareDetailRow("Total Upload (Tx)", t.formattedTotalTx)
+                    HardwareDetailRow("Mobile Data Download", t.formattedMobileRx)
+                    HardwareDetailRow("Mobile Data Upload", t.formattedMobileTx)
+                }
+            }
+        }
+
+        // Hardware Sensors Diagnostic Card
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = CardSurface),
+            shape = RoundedCornerShape(12.dp)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Sensors, contentDescription = null, tint = SecondaryGreen)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("HARDWARE SENSORS DIAGNOSTIC (${sensors.size} Active)", fontSize = 11.sp, color = TextSecondary, fontWeight = FontWeight.Bold)
+                }
+                Spacer(modifier = Modifier.height(12.dp))
+
+                sensors.take(10).forEach { sensor ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(sensor.name, fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 12.sp)
+                            Text("${sensor.powerMa} mA", color = SecondaryGreen, fontSize = 11.sp)
+                        }
+                        Text("${sensor.typeName} • Vendor: ${sensor.vendor}", color = TextSecondary, fontSize = 10.sp)
+                        Divider(color = SurfaceDark, modifier = Modifier.padding(top = 4.dp))
+                    }
+                }
+            }
         }
     }
 }

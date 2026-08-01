@@ -1,5 +1,8 @@
 package com.jelyta.deviceguardian.domain.model
 
+import com.jelyta.deviceguardian.data.datasource.hardware.HardwareSensorInfo
+import com.jelyta.deviceguardian.data.datasource.hardware.NetworkTrafficHardwareInfo
+
 enum class HardwareStatus {
     EXCELLENT,
     GOOD,
@@ -58,5 +61,7 @@ data class HardwareSnapshot(
     val cpuInfo: CpuHardwareInfo,
     val thermalInfo: ThermalHardwareInfo,
     val health: HardwareHealth,
+    val sensorsInfo: List<HardwareSensorInfo> = emptyList(),
+    val networkTrafficInfo: NetworkTrafficHardwareInfo? = null,
     val timestamp: Long = System.currentTimeMillis()
 )

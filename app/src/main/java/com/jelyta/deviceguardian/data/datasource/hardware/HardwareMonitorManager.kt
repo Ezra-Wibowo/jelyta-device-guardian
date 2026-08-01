@@ -22,6 +22,8 @@ open class HardwareMonitorManager(private val context: Context) {
     private val memoryMonitor = MemoryMonitor(context)
     private val cpuMonitor = CpuMonitor()
     private val thermalMonitor = ThermalMonitor(context)
+    private val sensorMonitor = SensorMonitor(context)
+    private val networkTrafficMonitor = NetworkTrafficMonitor()
     private val healthCalculator = HardwareHealthCalculator()
 
     open fun getHardwareSnapshotFlow(): Flow<HardwareSnapshot> {
@@ -37,6 +39,8 @@ open class HardwareMonitorManager(private val context: Context) {
             val storageInfo = storageMonitor.getStorageInfo()
             val cpuInfo = cpuMonitor.getCpuInfo()
             val thermalInfo = thermalMonitor.getThermalInfo(batteryInfo.temperatureCelsius)
+            val sensorsInfo = sensorMonitor.getHardwareSensors()
+            val trafficInfo = networkTrafficMonitor.getTrafficInfo()
 
             val health = healthCalculator.calculateHealth(
                 batteryInfo = batteryInfo,
@@ -52,7 +56,9 @@ open class HardwareMonitorManager(private val context: Context) {
                 storageInfo = storageInfo,
                 cpuInfo = cpuInfo,
                 thermalInfo = thermalInfo,
-                health = health
+                health = health,
+                sensorsInfo = sensorsInfo,
+                networkTrafficInfo = trafficInfo
             )
         }
     }
@@ -68,6 +74,8 @@ open class HardwareMonitorManager(private val context: Context) {
             val storageInfo = storageMonitor.getStorageInfo()
             val cpuInfo = cpuMonitor.getCpuInfo()
             val thermalInfo = thermalMonitor.getThermalInfo(batteryInfo.temperatureCelsius)
+            val sensorsInfo = sensorMonitor.getHardwareSensors()
+            val trafficInfo = networkTrafficMonitor.getTrafficInfo()
 
             val health = healthCalculator.calculateHealth(
                 batteryInfo = batteryInfo,
@@ -84,7 +92,9 @@ open class HardwareMonitorManager(private val context: Context) {
                     storageInfo = storageInfo,
                     cpuInfo = cpuInfo,
                     thermalInfo = thermalInfo,
-                    health = health
+                    health = health,
+                    sensorsInfo = sensorsInfo,
+                    networkTrafficInfo = trafficInfo
                 )
             )
             delay(intervalMs)
@@ -101,6 +111,8 @@ open class HardwareMonitorManager(private val context: Context) {
         val storageInfo = storageMonitor.getStorageInfo()
         val cpuInfo = cpuMonitor.getCpuInfo()
         val thermalInfo = thermalMonitor.getThermalInfo(batteryInfo.temperatureCelsius)
+        val sensorsInfo = sensorMonitor.getHardwareSensors()
+        val trafficInfo = networkTrafficMonitor.getTrafficInfo()
 
         val health = healthCalculator.calculateHealth(
             batteryInfo = batteryInfo,
@@ -116,7 +128,9 @@ open class HardwareMonitorManager(private val context: Context) {
             storageInfo = storageInfo,
             cpuInfo = cpuInfo,
             thermalInfo = thermalInfo,
-            health = health
+            health = health,
+            sensorsInfo = sensorsInfo,
+            networkTrafficInfo = trafficInfo
         )
     }
 }

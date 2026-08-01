@@ -26,6 +26,15 @@ class RepositoryModule(
     }
 
     val healthRepository: HealthRepository by lazy {
-        HealthRepositoryImpl(databaseModule.healthReportDao, databaseModule.optimizationLogDao)
+        HealthRepositoryImpl(
+            healthReportDao = databaseModule.healthReportDao,
+            optimizationLogDao = databaseModule.optimizationLogDao,
+            securityIncidentDao = databaseModule.securityIncidentDao,
+            digitalEvidenceDao = databaseModule.digitalEvidenceDao,
+            iocItemDao = databaseModule.iocItemDao,
+            assetItemDao = databaseModule.assetItemDao,
+            auditLogDao = databaseModule.auditLogDao,
+            threatItemDao = databaseModule.threatItemDao
+        )
     }
 }

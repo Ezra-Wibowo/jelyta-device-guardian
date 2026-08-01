@@ -48,4 +48,16 @@ class NotificationHelper(private val context: Context) {
         val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         manager.notify(1001, builder.build())
     }
+
+    fun showSecurityNotification(title: String, message: String) {
+        val builder = NotificationCompat.Builder(context, CHANNEL_SECURITY)
+            .setSmallIcon(android.R.drawable.ic_dialog_alert)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+        val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        manager.notify(1002, builder.build())
+    }
 }
