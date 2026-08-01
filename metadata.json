@@ -1,0 +1,6 @@
+{
+  "name": "AI Device Guardian",
+  "description": "Jelyta Sister's AI Device Guardian - Lightweight, privacy-focused Android device monitor, AI performance optimizer, self healing engine, security auditor, and AI assistant.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
