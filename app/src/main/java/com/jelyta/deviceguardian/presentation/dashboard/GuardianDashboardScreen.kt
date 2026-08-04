@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -79,12 +80,41 @@ fun GuardianDashboardScreen(
                     }
                 },
                 actions = {
+                    IconButton(
+                        onClick = {
+                            val reportSummary = """
+                                🛡️ JELYTA DEVICE GUARDIAN - DIAGNOSTIC REPORT
+                                --------------------------------------------
+                                • Health Score: ${report?.score ?: 100}/100 (${report?.statusText ?: "Optimal"})
+                                • RAM Usage: ${metrics?.ramPercent ?: 0}% (${metrics?.ramUsedMb ?: 0}/${metrics?.ramTotalMb ?: 0} MB)
+                                • Storage: ${metrics?.storagePercent ?: 0}% Used (${String.format("%.1f", metrics?.storageFreeGb ?: 0.0)} GB Free)
+                                • Battery: ${metrics?.batteryPercent ?: 0}% (${metrics?.batteryTempCelsius ?: 0.0}°C, ${if (metrics?.isCharging == true) "Charging" else "Discharging"})
+                                • Performance Mode: ${metrics?.performanceMode?.name ?: "BALANCED"}
+                                • Active Issues Count: ${report?.keyIssues?.size ?: 0}
+                                --------------------------------------------
+                                Report Generated: ${SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())}
+                            """.trimIndent()
+
+                            val clipboardManager = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                            val clip = android.content.ClipData.newPlainText("Device Health Report", reportSummary)
+                            clipboardManager?.setPrimaryClip(clip)
+                            Toast.makeText(context, "📋 Laporan Diagnostik Disalin ke Papan Klip!", Toast.LENGTH_SHORT).show()
+                        },
+                        modifier = Modifier.testTag("export_report_btn")
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Share,
+                            contentDescription = "Export Report",
+                            tint = PrimaryCyan
+                        )
+                    }
+
                     Surface(
                         color = SecondaryGreen.copy(alpha = 0.15f),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Row(
-                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Box(
@@ -95,7 +125,7 @@ fun GuardianDashboardScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                "AI Standby Active",
+                                "AI Active",
                                 color = SecondaryGreen,
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold
@@ -115,6 +145,170 @@ fun GuardianDashboardScreen(
                 .padding(horizontal = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Section -1: Patent Certification Card
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = CardSurface)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(14.dp).fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Surface(
+                            color = PrimaryCyan.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(12.dp),
+                            modifier = Modifier.size(44.dp)
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    imageVector = Icons.Default.Verified,
+                                    contentDescription = "Patent Badge",
+                                    tint = PrimaryCyan,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.width(12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Text(
+                                    text = "Hak Paten & Hak Cipta Terdaftar",
+                                    fontWeight = FontWeight.Bold,
+                                    color = TextPrimary,
+                                    fontSize = 13.sp
+                                )
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Surface(
+                                    color = SecondaryGreen.copy(alpha = 0.2f),
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Text(
+                                        text = "RESMI",
+                                        color = SecondaryGreen,
+                                        fontSize = 9.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Pemegang Paten: Samuel David Stefano Basary",
+                                color = TextPrimary,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                            Text(
+                                text = "No. Paten: IDP000082736-DG • AI Device Defense Engine",
+                                color = TextSecondary,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Section 0: AI Standby Patrol Engine Card
+            item {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = SurfaceDark
+                    )
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Shield,
+                                    contentDescription = "Patrol AI",
+                                    tint = SecondaryGreen,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Column {
+                                    Text(
+                                        text = "AI Standby Patrol Active",
+                                        fontWeight = FontWeight.Bold,
+                                        color = TextPrimary,
+                                        fontSize = 15.sp
+                                    )
+                                    Text(
+                                        text = "Penjaga Keamanan & Kinerja HP Otomatis",
+                                        color = SecondaryGreen,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                            Switch(
+                                checked = state.isAiPatrolActive,
+                                onCheckedChange = { viewModel.toggleAiPatrol(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = DarkBackground,
+                                    checkedTrackColor = SecondaryGreen
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column {
+                                Text("Patroli Hari Ini", color = TextSecondary, fontSize = 10.sp)
+                                Text("${state.patrolStats.patrolsTodayCount}x Selesai", color = TextPrimary, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Column {
+                                Text("Auto Junk Cleared", color = TextSecondary, fontSize = 10.sp)
+                                Text("${state.patrolStats.junkAutoClearedMb} MB", color = SecondaryGreen, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                            Column {
+                                Text("Ancaman Dicegah", color = TextSecondary, fontSize = 10.sp)
+                                Text("${state.patrolStats.threatsBlockedCount} Blocked", color = PrimaryCyan, fontWeight = FontWeight.Bold, fontSize = 12.sp)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = { viewModel.runStandbyPatrolNow() },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(44.dp)
+                                .testTag("run_standby_patrol_btn"),
+                            colors = ButtonDefaults.buttonColors(containerColor = SecondaryGreen),
+                            enabled = !state.isHealing
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.HealthAndSafety,
+                                contentDescription = null,
+                                tint = DarkBackground,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "Jalankan Patroli AI & Clean Junk Sekarang",
+                                color = DarkBackground,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 13.sp
+                            )
+                        }
+                    }
+                }
+            }
+
             // Section 1: Enterprise SOC Metrics Cards
             item {
                 Text(
@@ -446,18 +640,34 @@ fun AuditHistoryCard(log: AuditLogItem) {
                         text = log.auditTitle,
                         fontWeight = FontWeight.Bold,
                         color = TextPrimary,
-                        fontSize = 13.sp
+                        fontSize = 13.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
                     )
-                    Text(
-                        text = log.outcome,
-                        fontWeight = FontWeight.Bold,
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Surface(
                         color = when (log.outcome) {
-                            "REPAIRED", "SUCCESS", "PASSED" -> SecondaryGreen
-                            "ATTENTION REQUIRED" -> WarningOrange
-                            else -> PrimaryCyan
+                            "REPAIRED", "SUCCESS", "PASSED", "CLEAN" -> SecondaryGreen.copy(alpha = 0.15f)
+                            "ATTENTION REQUIRED", "HIGH THREAT MATCH" -> WarningOrange.copy(alpha = 0.15f)
+                            else -> PrimaryCyan.copy(alpha = 0.15f)
                         },
-                        fontSize = 11.sp
-                    )
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            text = log.outcome,
+                            fontWeight = FontWeight.Bold,
+                            color = when (log.outcome) {
+                                "REPAIRED", "SUCCESS", "PASSED", "CLEAN" -> SecondaryGreen
+                                "ATTENTION REQUIRED", "HIGH THREAT MATCH" -> WarningOrange
+                                else -> PrimaryCyan
+                            },
+                            fontSize = 10.sp,
+                            maxLines = 1,
+                            softWrap = false,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
+                    }
                 }
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(

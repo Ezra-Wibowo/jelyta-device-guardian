@@ -110,13 +110,20 @@ fun SecurityScreen(
                 Tab(
                     selected = state.selectedTab == 2,
                     onClick = { viewModel.selectTab(2) },
-                    text = { Text("Forensics Hash", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                    text = { Text("Caller ID (GetContact)", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
                     selectedContentColor = PrimaryCyan,
                     unselectedContentColor = TextSecondary
                 )
                 Tab(
                     selected = state.selectedTab == 3,
                     onClick = { viewModel.selectTab(3) },
+                    text = { Text("Forensics Hash", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
+                    selectedContentColor = PrimaryCyan,
+                    unselectedContentColor = TextSecondary
+                )
+                Tab(
+                    selected = state.selectedTab == 4,
+                    onClick = { viewModel.selectTab(4) },
                     text = { Text("Threat Intel", fontWeight = FontWeight.Bold, fontSize = 12.sp) },
                     selectedContentColor = PrimaryCyan,
                     unselectedContentColor = TextSecondary
@@ -127,12 +134,19 @@ fun SecurityScreen(
             when (state.selectedTab) {
                 0 -> AppPermissionsTab(state = state)
                 1 -> NetworkSecurityTab(state = state, onScanNetwork = { viewModel.scanNetworkSecurity() })
-                2 -> ForensicsHashTab(
+                2 -> CallerIdTab(
+                    state = state,
+                    onNumberChanged = { viewModel.updateCallerInput(it) },
+                    onLookupNumber = { viewModel.executeCallerLookup() },
+                    onToggleSpam = { viewModel.toggleSpamBlocker(it) },
+                    onTogglePhishing = { viewModel.togglePhishingFilter(it) }
+                )
+                3 -> ForensicsHashTab(
                     state = state,
                     onInputChanged = { viewModel.updateForensicInput(it) },
                     onGenerateHash = { viewModel.generateForensicHash() }
                 )
-                3 -> ThreatIntelTab(
+                4 -> ThreatIntelTab(
                     state = state,
                     onQueryChanged = { viewModel.updateThreatQuery(it) },
                     onSearchThreat = { viewModel.executeThreatLookup() }
@@ -251,6 +265,14 @@ fun ForensicsHashTab(
     onInputChanged: (String) -> Unit,
     onGenerateHash: () -> Unit
 ) {
+    val presets = listOf(
+        "SYSTEM_KERNEL_LOG_01",
+        "WIFI_PCAP_TRACE_LOG",
+        "APK_PACKAGE_DIGEST_V2",
+        "MEMORY_DUMP_CHUNK_04",
+        "SUSPICIOUS_SMS_PAYLOAD"
+    )
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -276,9 +298,26 @@ fun ForensicsHashTab(
                         focusedLabelColor = WarningOrange
                     )
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Sample Artifact Templates (Tap to Auto-Fill):", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(6.dp))
+                OptInComposeChipRow(
+                    items = presets,
+                    onSelected = { item ->
+                        onInputChanged(item)
+                        onGenerateHash()
+                    }
+                )
+
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
-                    onClick = onGenerateHash,
+                    onClick = {
+                        if (state.forensicInput.isBlank()) {
+                            onInputChanged("SYSTEM_KERNEL_LOG_01")
+                        }
+                        onGenerateHash()
+                    },
                     modifier = Modifier.fillMaxWidth().height(44.dp).testTag("generate_hash_btn"),
                     colors = ButtonDefaults.buttonColors(containerColor = WarningOrange),
                     shape = RoundedCornerShape(10.dp)
@@ -317,6 +356,13 @@ fun ThreatIntelTab(
     onQueryChanged: (String) -> Unit,
     onSearchThreat: () -> Unit
 ) {
+    val presets = listOf(
+        "185.220.101.4",
+        "malware_c2_botnet",
+        "8.8.8.8",
+        "192.168.1.1"
+    )
+
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Card(
             modifier = Modifier.fillMaxWidth(),
@@ -342,9 +388,26 @@ fun ThreatIntelTab(
                         focusedLabelColor = PrimaryCyan
                     )
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Sample IOC Queries (Tap to Test):", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                Spacer(modifier = Modifier.height(6.dp))
+                OptInComposeChipRow(
+                    items = presets,
+                    onSelected = { item ->
+                        onQueryChanged(item)
+                        onSearchThreat()
+                    }
+                )
+
                 Spacer(modifier = Modifier.height(12.dp))
                 Button(
-                    onClick = onSearchThreat,
+                    onClick = {
+                        if (state.threatQuery.isBlank()) {
+                            onQueryChanged("185.220.101.4")
+                        }
+                        onSearchThreat()
+                    },
                     modifier = Modifier.fillMaxWidth().height(44.dp).testTag("search_threat_btn"),
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryCyan),
                     shape = RoundedCornerShape(10.dp)
@@ -385,6 +448,250 @@ fun ThreatIntelTab(
                                 Text("• $rule", color = TextSecondary, fontSize = 10.sp)
                             }
                         }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun OptInComposeChipRow(
+    items: List<String>,
+    onSelected: (String) -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        items.take(3).forEach { item ->
+            SuggestionChip(
+                onClick = { onSelected(item) },
+                label = {
+                    Text(
+                        text = item,
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = PrimaryCyan
+                    )
+                },
+                shape = RoundedCornerShape(8.dp),
+                border = SuggestionChipDefaults.suggestionChipBorder(
+                    enabled = true,
+                    borderColor = PrimaryCyan.copy(alpha = 0.4f)
+                ),
+                colors = SuggestionChipDefaults.suggestionChipColors(
+                    containerColor = SurfaceDark
+                )
+            )
+        }
+    }
+}
+
+@Composable
+fun CallerIdTab(
+    state: SecurityUiState,
+    onNumberChanged: (String) -> Unit,
+    onLookupNumber: () -> Unit,
+    onToggleSpam: (Boolean) -> Unit,
+    onTogglePhishing: (Boolean) -> Unit
+) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = CardSurface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Pencarian Identitas Pemanggil (Truecaller / GetContact)", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
+                    Text("Ketahui nama & reputasi nomor tak dikenal sebelum diangkat", color = TextSecondary, fontSize = 11.sp)
+                    
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    OutlinedTextField(
+                        value = state.callerInput,
+                        onValueChange = onNumberChanged,
+                        label = { Text("Masukkan Nomor Telepon (cth: 081299887711)", color = TextSecondary) },
+                        modifier = Modifier.fillMaxWidth().testTag("caller_id_input"),
+                        singleLine = true,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = PrimaryCyan,
+                            unfocusedBorderColor = SurfaceDark,
+                            focusedTextColor = TextPrimary,
+                            unfocusedTextColor = TextPrimary
+                        )
+                    )
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Button(
+                        onClick = {
+                            if (state.callerInput.isBlank()) {
+                                onNumberChanged("081299887711")
+                            }
+                            onLookupNumber()
+                        },
+                        modifier = Modifier.fillMaxWidth().height(44.dp).testTag("lookup_caller_btn"),
+                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryCyan),
+                        shape = RoundedCornerShape(10.dp)
+                    ) {
+                        Icon(Icons.Default.Phone, contentDescription = null, tint = DarkBackground)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Cari Identitas Kontak AI", color = DarkBackground, fontWeight = FontWeight.Bold)
+                    }
+
+                    state.callerResult?.let { res ->
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Hasil Identifikasi Kontak:", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 13.sp)
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            colors = CardDefaults.cardColors(containerColor = SurfaceDark)
+                        ) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(res.callerName, fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
+                                            if (res.isVerified) {
+                                                Spacer(modifier = Modifier.width(4.dp))
+                                                Icon(Icons.Default.Verified, contentDescription = "Verified", tint = SecondaryGreen, modifier = Modifier.size(16.dp))
+                                            }
+                                        }
+                                        Text("${res.phoneNumber} • ${res.carrier}", color = TextSecondary, fontSize = 11.sp)
+                                    }
+                                    
+                                    Surface(
+                                        color = if (res.spamScore > 50) DangerRed.copy(alpha = 0.2f) else SecondaryGreen.copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(8.dp)
+                                    ) {
+                                        Text(
+                                            "Spam ${res.spamScore}%",
+                                            color = if (res.spamScore > 50) DangerRed else SecondaryGreen,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 11.sp,
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text("Tipe Pemanggil: ${res.callerType}", color = TextSecondary, fontSize = 12.sp)
+
+                                if (res.communityTags.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text("GetContact Community Tags:", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 11.sp)
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        res.communityTags.forEach { tag ->
+                                            Surface(
+                                                color = PrimaryCyan.copy(alpha = 0.15f),
+                                                shape = RoundedCornerShape(6.dp)
+                                            ) {
+                                                Text(tag, color = PrimaryCyan, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = CardSurface)
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text("Pengaturan Pertahanan Anti-Spam & Penipuan", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Blokir Panggilan Spam & Debt Collector", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 13.sp)
+                            Text("Otomatis menolak telepon terindikasi penipuan & sales", color = TextSecondary, fontSize = 11.sp)
+                        }
+                        Switch(
+                            checked = state.isSpamBlockerActive,
+                            onCheckedChange = onToggleSpam,
+                            colors = SwitchDefaults.colors(checkedThumbColor = DarkBackground, checkedTrackColor = SecondaryGreen)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Filter SMS Phishing & Link Berbahaya", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 13.sp)
+                            Text("Deteksi pesan APK jahat & tautan pancingan akun", color = TextSecondary, fontSize = 11.sp)
+                        }
+                        Switch(
+                            checked = state.isPhishingSmsFilterActive,
+                            onCheckedChange = onTogglePhishing,
+                            colors = SwitchDefaults.colors(checkedThumbColor = DarkBackground, checkedTrackColor = SecondaryGreen)
+                        )
+                    }
+                }
+            }
+        }
+
+        item {
+            Text("Riwayat Panggilan Spam Diblokir Terbaru", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 14.sp)
+        }
+
+        items(state.recentSpamCalls) { spam ->
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = CardSurface)
+            ) {
+                Row(
+                    modifier = Modifier.padding(14.dp).fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                        Icon(Icons.Default.PhoneCallback, contentDescription = null, tint = DangerRed, modifier = Modifier.size(20.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Column {
+                            Text(spam.callerName, fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 13.sp)
+                            Text("${spam.number} • ${spam.timestamp}", color = TextSecondary, fontSize = 11.sp)
+                        }
+                    }
+
+                    Surface(
+                        color = DangerRed.copy(alpha = 0.15f),
+                        shape = RoundedCornerShape(6.dp)
+                    ) {
+                        Text(
+                            spam.actionTaken,
+                            color = DangerRed,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 10.sp,
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                        )
                     }
                 }
             }

@@ -34,7 +34,15 @@ class AssistantViewModel(
     private fun loadHistory() {
         viewModelScope.launch {
             chatAssistantUseCase.getChatHistory().collect { chatList ->
-                _uiState.update { it.copy(messages = chatList) }
+                if (chatList.isEmpty()) {
+                    val defaultGreeting = ChatMessage(
+                        content = "👋 **Halo! Saya Jelyta Guardian AI Assistant.**\nBagaimana kondisi HP Anda hari ini? Ketik pertanyaan atau pilih topik rekomendasi di bawah untuk menganalisis RAM, baterai, dan keamanan!",
+                        isUser = false
+                    )
+                    _uiState.update { it.copy(messages = listOf(defaultGreeting)) }
+                } else {
+                    _uiState.update { it.copy(messages = chatList) }
+                }
             }
         }
     }
@@ -55,6 +63,17 @@ class AssistantViewModel(
             _uiState.update { it.copy(isLoading = true) }
             val result = translateTextUseCase(text, targetLang)
             _uiState.update { it.copy(translationResult = result, isLoading = false) }
+        }
+    }
+
+    fun clearChatHistory() {
+        viewModelScope.launch {
+            chatAssistantUseCase.clearChatHistory()
+            val defaultGreeting = ChatMessage(
+                content = "👋 **Riwayat chat dibersihkan.**\nHalo! Saya Jelyta Guardian AI Assistant. Ada yang bisa saya bantu dengan HP Anda?",
+                isUser = false
+            )
+            _uiState.update { it.copy(messages = listOf(defaultGreeting)) }
         }
     }
 

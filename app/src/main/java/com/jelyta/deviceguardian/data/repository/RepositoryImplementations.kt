@@ -44,6 +44,10 @@ class AssistantRepositoryImpl(
     override suspend fun saveChatMessage(message: ChatMessage) {
         chatMessageDao.insertMessage(ChatMessageEntity.fromDomain(message))
     }
+
+    override suspend fun clearChatHistory() {
+        chatMessageDao.clearAllMessages()
+    }
 }
 
 class CloudRepositoryImpl(

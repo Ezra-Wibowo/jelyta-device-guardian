@@ -31,7 +31,15 @@ open class BatteryMonitorService(private val context: Context) {
         }
 
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        val initialIntent = context.registerReceiver(receiver, filter)
+        val initialIntent = try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(receiver, filter, Context.RECEIVER_EXPORTED)
+            } else {
+                context.registerReceiver(receiver, filter)
+            }
+        } catch (_: Exception) {
+            null
+        }
         
         // Emit initial status if available
         if (initialIntent != null) {
@@ -47,7 +55,15 @@ open class BatteryMonitorService(private val context: Context) {
 
     open fun getBatteryInfoOnce(): BatteryInfo {
         val filter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        val intent = context.registerReceiver(null, filter)
+        val intent = try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                context.registerReceiver(null, filter, Context.RECEIVER_EXPORTED)
+            } else {
+                context.registerReceiver(null, filter)
+            }
+        } catch (_: Exception) {
+            null
+        }
         return if (intent != null) {
             parseBatteryIntent(intent)
         } else {

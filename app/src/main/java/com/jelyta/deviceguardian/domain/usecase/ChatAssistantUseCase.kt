@@ -20,4 +20,8 @@ class ChatAssistantUseCase(
     }
 
     fun getChatHistory(): Flow<List<ChatMessage>> = assistantRepository.getChatHistory()
+
+    suspend fun clearChatHistory() {
+        assistantRepository.clearChatHistory()
+    }
 }

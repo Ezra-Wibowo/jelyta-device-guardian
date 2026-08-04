@@ -11,6 +11,7 @@ open class NotificationHelper(private val context: Context) {
     companion object {
         const val CHANNEL_HEALTH = "guardian_health_channel"
         const val CHANNEL_SECURITY = "guardian_security_channel"
+        const val CHANNEL_JUNK = "guardian_junk_channel"
     }
 
     init {
@@ -32,9 +33,19 @@ open class NotificationHelper(private val context: Context) {
                     NotificationManager.IMPORTANCE_HIGH
                 ).apply { description = "Alerts regarding application permissions and privacy risks." }
 
+                val junkChannel = NotificationChannel(
+                    CHANNEL_JUNK,
+                    "Silent Junk & Temp File Monitor",
+                    NotificationManager.IMPORTANCE_LOW
+                ).apply {
+                    description = "Silent non-intrusive notifications when temp junk files exceed threshold."
+                    setShowBadge(true)
+                }
+
                 val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
                 manager?.createNotificationChannel(healthChannel)
                 manager?.createNotificationChannel(securityChannel)
+                manager?.createNotificationChannel(junkChannel)
             } catch (_: Exception) {
                 // Ignore in headless / test environment
             }
@@ -68,6 +79,32 @@ open class NotificationHelper(private val context: Context) {
 
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
             manager?.notify(1002, builder.build())
+        } catch (_: Exception) {
+            // Ignore in headless / test environment
+        }
+    }
+
+    open fun showJunkThresholdNotification(junkMb: Int, thresholdMb: Int, contentIntent: android.app.PendingIntent? = null) {
+        try {
+            val builder = NotificationCompat.Builder(context, CHANNEL_JUNK)
+                .setSmallIcon(android.R.drawable.ic_menu_delete)
+                .setContentTitle("🧹 Junk Files Exceed ${thresholdMb}MB (${junkMb}MB Found)")
+                .setContentText("Tap for one-tap clean to reclaim storage and boost CPU performance.")
+                .setPriority(NotificationCompat.PRIORITY_LOW) // Silent / non-intrusive
+                .setSilent(true)
+                .setAutoCancel(true)
+
+            if (contentIntent != null) {
+                builder.setContentIntent(contentIntent)
+                builder.addAction(
+                    android.R.drawable.ic_menu_delete,
+                    "⚡ One-Tap Clean Now",
+                    contentIntent
+                )
+            }
+
+            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            manager?.notify(1003, builder.build())
         } catch (_: Exception) {
             // Ignore in headless / test environment
         }

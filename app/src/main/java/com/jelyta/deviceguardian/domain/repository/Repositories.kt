@@ -20,6 +20,7 @@ interface AssistantRepository {
     suspend fun translateText(text: String, targetLanguage: String): String
     fun getChatHistory(): Flow<List<ChatMessage>>
     suspend fun saveChatMessage(message: ChatMessage)
+    suspend fun clearChatHistory()
 }
 
 interface CloudRepository {

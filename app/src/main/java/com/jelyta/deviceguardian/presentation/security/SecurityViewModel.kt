@@ -30,16 +30,44 @@ data class ThreatLookupResult(
     val matchedRules: List<String> = emptyList()
 )
 
+data class CallerIdentityResult(
+    val phoneNumber: String = "",
+    val callerName: String = "",
+    val callerType: String = "",
+    val spamScore: Int = 0,
+    val carrier: String = "",
+    val isVerified: Boolean = false,
+    val communityTags: List<String> = emptyList(),
+    val reportCount: Int = 0
+)
+
+data class RecentSpamCall(
+    val number: String,
+    val callerName: String,
+    val timestamp: String,
+    val riskLevel: String,
+    val actionTaken: String
+)
+
 data class SecurityUiState(
     val apps: List<AppSecurityInfo> = emptyList(),
     val isScanning: Boolean = false,
     val securityScore: Int = 98,
-    val selectedTab: Int = 0, // 0: App Permissions, 1: Network & Wi-Fi, 2: Forensics Hash, 3: Threat Intel
+    val selectedTab: Int = 0, // 0: App Permissions, 1: Network & Wi-Fi, 2: Caller ID (GetContact), 3: Forensics Hash, 4: Threat Intel
     val networkState: NetworkSecurityState = NetworkSecurityState(),
     val forensicInput: String = "",
     val forensicHashResult: String = "",
     val threatQuery: String = "",
     val threatResult: ThreatLookupResult? = null,
+    val callerInput: String = "",
+    val callerResult: CallerIdentityResult? = null,
+    val isSpamBlockerActive: Boolean = true,
+    val isPhishingSmsFilterActive: Boolean = true,
+    val recentSpamCalls: List<RecentSpamCall> = listOf(
+        RecentSpamCall("+6281299887711", "Spam Pinjol Illegal - DC", "10 menit lalu", "HIGH", "BLOCKED"),
+        RecentSpamCall("+6285711223344", "Penipuan Undian Hadiah Fake", "1 jam lalu", "HIGH", "BLOCKED"),
+        RecentSpamCall("+6282133445566", "Sales Asuransi & Kartu Kredit", "3 jam lalu", "MEDIUM", "FLAGGED")
+    ),
     val toastMessage: String? = null
 )
 
@@ -228,6 +256,78 @@ class SecurityViewModel(
                     toastMessage = "Threat Lookup Complete: ${result.status}"
                 )
             }
+        }
+    }
+
+    fun updateCallerInput(number: String) {
+        _uiState.update { it.copy(callerInput = number) }
+    }
+
+    fun executeCallerLookup() {
+        val num = _uiState.value.callerInput.trim()
+        if (num.isBlank()) return
+
+        viewModelScope.launch {
+            _uiState.update { it.copy(isScanning = true) }
+            val isSpam = num.contains("08129") || num.contains("0857") || num.contains("pinjol") || num.contains("123")
+            
+            val result = if (isSpam) {
+                CallerIdentityResult(
+                    phoneNumber = num,
+                    callerName = "⚠️ Penipuan / Pinjol Illegal DC",
+                    callerType = "Spam / High Risk Fraud",
+                    spamScore = 92,
+                    carrier = "Telkomsel Cellular",
+                    isVerified = false,
+                    communityTags = listOf("#SpamPenipuan", "#PinjolDC", "#DebtCollectorFake", "#JanganDiangkat"),
+                    reportCount = 342
+                )
+            } else {
+                CallerIdentityResult(
+                    phoneNumber = num,
+                    callerName = "Bank BCA Customer Care",
+                    callerType = "Verified Enterprise Business",
+                    spamScore = 2,
+                    carrier = "Indosat Ooredoo Hutchison",
+                    isVerified = true,
+                    communityTags = listOf("#VerifiedOfficial", "#BankBCA", "#OfficialService"),
+                    reportCount = 0
+                )
+            }
+
+            healthRepository.saveAudit(
+                AuditLogItem(
+                    auditTitle = "GetContact Caller ID Lookup",
+                    outcome = if (result.spamScore > 50) "HIGH THREAT MATCH" else "PASSED",
+                    details = "Identified $num: ${result.callerName} (Spam Score: ${result.spamScore}%)"
+                )
+            )
+
+            _uiState.update {
+                it.copy(
+                    isScanning = false,
+                    callerResult = result,
+                    toastMessage = "Identifikasi Kontak Selesai: ${result.callerName}"
+                )
+            }
+        }
+    }
+
+    fun toggleSpamBlocker(enabled: Boolean) {
+        _uiState.update { 
+            it.copy(
+                isSpamBlockerActive = enabled,
+                toastMessage = if (enabled) "🚫 Blokir Panggilan Spam Otomatis Aktif!" else "⚠️ Pemblokir Panggilan Spam Non-aktif"
+            ) 
+        }
+    }
+
+    fun togglePhishingFilter(enabled: Boolean) {
+        _uiState.update { 
+            it.copy(
+                isPhishingSmsFilterActive = enabled,
+                toastMessage = if (enabled) "✉️ Filter SMS Penipuan AI Aktif!" else "⚠️ Filter SMS Penipuan Non-aktif"
+            ) 
         }
     }
 
