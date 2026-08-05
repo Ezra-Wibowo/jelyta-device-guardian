@@ -504,15 +504,44 @@ fun CallerIdTab(
                 colors = CardDefaults.cardColors(containerColor = CardSurface)
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
-                    Text("Pencarian Identitas Pemanggil (Truecaller / GetContact)", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
-                    Text("Ketahui nama & reputasi nomor tak dikenal sebelum diangkat", color = TextSecondary, fontSize = 11.sp)
+                    Text("Pencarian Identitas Pemanggil (PogaPhone & GetContact OSINT)", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 15.sp)
+                    Text("Ketahui nama, lokasi provider & reputasi OSINT nomor tak dikenal sebelum diangkat", color = TextSecondary, fontSize = 11.sp)
                     
-                    Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text("Sample Presets (Tap to Test OSINT):", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        val sampleNumbers = listOf(
+                            "08121886710" to "Official Bank BCA",
+                            "081299887711" to "Pinjol / Fraud DC",
+                            "085711223344" to "Kurir Paket JNE"
+                        )
+                        sampleNumbers.forEach { (num, label) ->
+                            SuggestionChip(
+                                onClick = {
+                                    onNumberChanged(num)
+                                    onLookupNumber()
+                                },
+                                label = { Text(label, fontSize = 10.sp, color = PrimaryCyan, fontWeight = FontWeight.Bold) },
+                                border = SuggestionChipDefaults.suggestionChipBorder(
+                                    enabled = true,
+                                    borderColor = PrimaryCyan.copy(alpha = 0.5f)
+                                ),
+                                colors = SuggestionChipDefaults.suggestionChipColors(containerColor = SurfaceDark)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
 
                     OutlinedTextField(
                         value = state.callerInput,
                         onValueChange = onNumberChanged,
-                        label = { Text("Masukkan Nomor Telepon (cth: 081299887711)", color = TextSecondary) },
+                        label = { Text("Masukkan Nomor Telepon (cth: 08121886710 / 081299887711)", color = TextSecondary) },
                         modifier = Modifier.fillMaxWidth().testTag("caller_id_input"),
                         singleLine = true,
                         colors = OutlinedTextFieldDefaults.colors(
@@ -528,7 +557,7 @@ fun CallerIdTab(
                     Button(
                         onClick = {
                             if (state.callerInput.isBlank()) {
-                                onNumberChanged("081299887711")
+                                onNumberChanged("08121886710")
                             }
                             onLookupNumber()
                         },
@@ -536,14 +565,20 @@ fun CallerIdTab(
                         colors = ButtonDefaults.buttonColors(containerColor = PrimaryCyan),
                         shape = RoundedCornerShape(10.dp)
                     ) {
-                        Icon(Icons.Default.Phone, contentDescription = null, tint = DarkBackground)
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("Cari Identitas Kontak AI", color = DarkBackground, fontWeight = FontWeight.Bold)
+                        if (state.isScanning) {
+                            CircularProgressIndicator(color = DarkBackground, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Proses OSINT PogaPhone...", color = DarkBackground, fontWeight = FontWeight.Bold)
+                        } else {
+                            Icon(Icons.Default.Phone, contentDescription = null, tint = DarkBackground)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Cari Identitas Kontak AI & PogaPhone OSINT", color = DarkBackground, fontWeight = FontWeight.Bold)
+                        }
                     }
 
                     state.callerResult?.let { res ->
                         Spacer(modifier = Modifier.height(16.dp))
-                        Text("Hasil Identifikasi Kontak:", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 13.sp)
+                        Text("Hasil Identifikasi & Intelligence OSINT:", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 13.sp)
                         Spacer(modifier = Modifier.height(8.dp))
                         
                         Card(
@@ -565,7 +600,11 @@ fun CallerIdTab(
                                                 Icon(Icons.Default.Verified, contentDescription = "Verified", tint = SecondaryGreen, modifier = Modifier.size(16.dp))
                                             }
                                         }
-                                        Text("${res.phoneNumber} • ${res.carrier}", color = TextSecondary, fontSize = 11.sp)
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text("${res.phoneNumber} • ${res.carrier}", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.SemiBold)
+                                        if (res.locationRegion.isNotEmpty()) {
+                                            Text("📍 Region Operator: ${res.locationRegion}", color = TextSecondary.copy(alpha = 0.8f), fontSize = 10.sp)
+                                        }
                                     }
                                     
                                     Surface(
@@ -573,7 +612,7 @@ fun CallerIdTab(
                                         shape = RoundedCornerShape(8.dp)
                                     ) {
                                         Text(
-                                            "Spam ${res.spamScore}%",
+                                            "Spam Risk ${res.spamScore}%",
                                             color = if (res.spamScore > 50) DangerRed else SecondaryGreen,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 11.sp,
@@ -582,13 +621,25 @@ fun CallerIdTab(
                                     }
                                 }
 
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Divider(color = CardSurface)
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Text("Tipe Pemanggil: ${res.callerType}", color = TextSecondary, fontSize = 12.sp)
+
+                                Text("Tipe Pemanggil: ${res.callerType}", color = TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+
+                                if (res.osintProfile.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Icon(Icons.Default.TravelExplore, contentDescription = null, tint = PrimaryCyan, modifier = Modifier.size(14.dp))
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                        Text(res.osintProfile, color = PrimaryCyan, fontSize = 11.sp, fontWeight = FontWeight.Medium)
+                                    }
+                                }
 
                                 if (res.communityTags.isNotEmpty()) {
-                                    Spacer(modifier = Modifier.height(8.dp))
-                                    Text("GetContact Community Tags:", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 11.sp)
-                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Spacer(modifier = Modifier.height(10.dp))
+                                    Text("GetContact & PogaPhone Community Tags:", fontWeight = FontWeight.Bold, color = TextPrimary, fontSize = 11.sp)
+                                    Spacer(modifier = Modifier.height(6.dp))
                                     Row(
                                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                                         modifier = Modifier.fillMaxWidth()
@@ -598,7 +649,7 @@ fun CallerIdTab(
                                                 color = PrimaryCyan.copy(alpha = 0.15f),
                                                 shape = RoundedCornerShape(6.dp)
                                             ) {
-                                                Text(tag, color = PrimaryCyan, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp))
+                                                Text(tag, color = PrimaryCyan, fontSize = 10.sp, modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp), fontWeight = FontWeight.SemiBold)
                                             }
                                         }
                                     }
